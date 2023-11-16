@@ -5,6 +5,7 @@ import java.util.List;
 
 import hai913i.tp2.utils.Pair;
 
+
 public class Main
 {
     static String graphFilePath = "src/main/resources/graph.dot";
@@ -18,7 +19,7 @@ public class Main
 //        
 //        double couplageBetweenTwoClasses = Couple.getCouplageBetweenTwoClasses("Test", "User", classPairs);
 //        
-//        System.out.println("Couplage entre Test et User : " + couplageBetweenTwoClasses);
+//    	System.out.println("Couplage entre Test et User : " + couplageBetweenTwoClasses);
 //        
 //        try {
 //			Couple.createCouplingGraph(classPairs);

@@ -44,6 +44,8 @@ public class Couple {
                 String fromLabel = getNodeLabel(edge.from(), graph);
                 String toLabel = getNodeLabel(edge.to().asLinkSource(), graph);
                 resultPairs.add(new Pair<>(fromLabel, toLabel));
+             
+
             }
         } catch (IOException io) {
             io.printStackTrace();
@@ -93,10 +95,11 @@ public class Couple {
 
     private static Set<String> extractUniqueClasses(List<Pair<String, String>> pairList) {
         Set<String> uniqueClasses = new HashSet<>();
-        for (Pair<String, String> pair : pairList) {
-            uniqueClasses.add(extractClassName(pair.getLeft()));
-            uniqueClasses.add(extractClassName(pair.getRight()));
+        for (Pair<String, String> pair : pairList) {        	
+                uniqueClasses.add(extractClassName(pair.getLeft()));
+                uniqueClasses.add(extractClassName(pair.getRight()));
         }
+       
         return uniqueClasses;
     }
 
@@ -112,11 +115,14 @@ public class Couple {
         for (String className : uniqueClasses) {
             graph.addVertex(className);
         }
+        
+        double total = 0;
 
         for (String classA : uniqueClasses) {
             for (String classB : uniqueClasses) {
                 if (!classA.equals(classB)) {
                     double coupling = getCouplageBetweenTwoClasses(classA, classB, pairList);
+                    total += coupling;
                     if (coupling > 0) {
                         DefaultWeightedEdge edge = graph.addEdge(classA, classB);
                         if (edge != null) {
@@ -127,6 +133,8 @@ public class Couple {
                 }
             }
         }
+        
+        System.out.println("Valeur couplage totale : " + total);
         return graph;
     }
 

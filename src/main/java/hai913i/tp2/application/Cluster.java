@@ -5,6 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +31,7 @@ public class Cluster {
 		for (Pair<String, String> pair : dendro) {
 			
 			System.out.println(pair.getLeft() + " avec " + pair.getRight());
+//			System.out.println(pair.getRight());
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -38,16 +43,18 @@ public class Cluster {
 		System.out.println("\n");
 		System.out.println("==========================");
 		System.out.println("\n");
-		System.out.println("Liste des clusters restants : ");
-			
-		for (String cluster : listCluster) {
-			
-			System.out.println(cluster);
-		}
-			
-		System.out.println("\n");
-		System.out.println("==========================");
-		System.out.println("\n");
+
+		
+//		System.out.println("Liste des clusters restants : ");
+//			
+//		for (String cluster : listCluster) {
+//			
+//			System.out.println(cluster);
+//		}
+//			
+//		System.out.println("\n");
+//		System.out.println("==========================");
+//		System.out.println("\n");
 		
 
 
@@ -61,7 +68,8 @@ public class Cluster {
             MutableGraph graph = new Parser().read(inputDotFile);
             for (MutableNode node : graph.nodes()) {
                 String label = extractLabelFromNode(node);
-                listCluster.add(label);
+                if (!(Character.isLowerCase(label.charAt(0)) || label.contains("<") || label.contains(">")))
+                	listCluster.add(label);
                 }
             
             for(Link link : graph.edges()) {
@@ -124,6 +132,7 @@ public class Cluster {
             listCluster.remove(bestCluster1);
             listCluster.remove(bestCluster2);
             listCluster.add(bestCluster1 + "." + bestCluster2);
+//            System.out.println("Nouveau cluster créer : " + bestCluster1 + "." + bestCluster2);
             dendro.add(new Pair<String, String>(bestCluster1, bestCluster2));
         }
 
@@ -159,5 +168,4 @@ public class Cluster {
 
         return coupling;
     }
-
 }
