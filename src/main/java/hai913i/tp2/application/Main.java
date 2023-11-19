@@ -6,18 +6,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.Set;
 
 import spoon.Launcher;
 import spoon.reflect.CtModel;
 import spoon.reflect.code.CtInvocation;
 import spoon.reflect.declaration.CtClass;
-import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.declaration.CtPackage;
 import spoon.reflect.declaration.CtType;
@@ -36,8 +34,9 @@ public class Main
     
     public static void main(String[] args) {
     	
+    	Scanner scannerUtil = new Scanner(System.in);
     	
-//    	Exercice n°1 - AVEC SPOON
+//    	Exercice n°1
     	
 //    	RECUPERATION DU PATH DANS LES PROPERTIES
     	Properties properties = new Properties();
@@ -75,31 +74,61 @@ public class Main
         
         // Exo-1 Q1:
         
+        CtClass<?> classA = null;
+        CtClass<?> classB = null;
+        String classAname, classBname;
+        
+        System.out.println("Exercice 1.1 : Couplage entre les classes");
         CouplingScanner scanner = new CouplingScanner();
         model.getRootPackage().accept(scanner);
         
-        CtClass<?> classA = findClassByName(model, "Counter");
-		CtClass<?> classB = findClassByName(model, "CounterController");
-        		
-//        System.out.println("Exemple du couplage entre Counter et CounterController : " + calculateCouplingByVisitor(classA, classB, scanner.getTypeToMethodCalls()));
-        System.out.println("Exemple du couplage entre Counter et CounterController : " + calculateCouplingBetweenClasses("Counter", "CounterController", model));
+        do
+        {
+        	System.out.println("Rentrez le nom de la classe A (ex : Counter)");
+            classAname = scannerUtil.nextLine();
+            System.out.println("Rentrez le nom de la classe B (ex : CounterController)");
+            classBname = scannerUtil.nextLine();
+            
+            classA = findClassByName(model, classAname);
+    		classB = findClassByName(model, classBname);
+    		
+    		if (classA == null)
+    		{
+    			System.out.println("La classe " + classAname + "est introuvable, rentrer une classe présente dans le projet");
+    		}
+    		
+    		if (classB == null)
+    		{
+    			System.out.println("La classe " + classBname + "est introuvable, rentrer une classe présente dans le projet");
+    		}
+    		
+        } while (classA == null || classB == null);
+        
+        // Version visitor
+        System.out.println("Couplage entre " + classAname + " et " + classBname + " : " + calculateCouplingByVisitor(classA, classB, scanner.getTypeToMethodCalls()));
+
+//        // Version base
+//        System.out.println("Couplage entre " + classAname + " et " + classBname + " : " + calculateCouplingBetweenClasses(classAname, classBname, model));
     	
         
         // Exo-1 Q2:
+        System.out.println("Exercice 1.2 : Graphe de couplage");
+        System.out.println("Voulez-vous générer le coupling graph du projet cible (y/n) ?");
+        String userInput = scannerUtil.nextLine();
         
-        Map<Pair<String, String>, Double> couplingGraph = new HashMap<>();
+        if (userInput.equals("y"))
+        {
+        	Map<Pair<String, String>, Double> couplingGraph = new HashMap<>();
+            
+            System.out.println("Creation du graphe de couplage ...");
+            fillCouplingGraph(couplingGraph, model);
+            System.out.println("Creation du graphe termine !");
+            exportGraph(couplingGraph);
+            System.out.println("Graphe sauvegarder !");
+        }
         
-        System.out.println("Creation du graphe de couplage ...");
-        fillCouplingGraph(couplingGraph, model);
-        System.out.println("Creation du graphe termine !");
-        exportGraph(couplingGraph);
-        System.out.println("Graphe sauvegarder !");
+        System.out.println("Merci, au revoir !");
         
-        // Exo-2 Q1:
-        // L'algorithme suivra une approche ascendante (agglomérative), où chaque 
-        // classe commence comme son propre cluster et, à chaque étape, les deux 
-        // clusters les plus couplés sont fusionnés jusqu'à ce que tous les clusters 
-        // soient regroupés en un seul.
     }
     
     private static void exportGraph(Map<Pair<String, String>, Double> couplingGraph)
@@ -140,9 +169,35 @@ public class Main
         }
 	}
 	
-	// A FAIRE // Remplis une collection avec les éléments d'un model
-	private static void fillCouplingGraphSpoon(Map<Pair<String, String>, Double> couplingGraph, CouplingScanner scanner)
-	{
+	private static void fillCouplingGraphSpoon(Map<Pair<String, String>, Double> couplingGraph, CouplingScanner scanner) {
+	    Map<CtType<?>, Map<CtMethod<?>, Set<CtExecutableReference<?>>>> typeToMethodCalls = scanner.getTypeToMethodCalls();
+
+	    for (Map.Entry<CtType<?>, Map<CtMethod<?>, Set<CtExecutableReference<?>>>> classEntry : typeToMethodCalls.entrySet()) {
+	        CtType<?> classA = classEntry.getKey();
+	        for (Map.Entry<CtMethod<?>, Set<CtExecutableReference<?>>> methodEntry : classEntry.getValue().entrySet()) {
+	            for (CtExecutableReference<?> calledMethod : methodEntry.getValue()) {
+	                CtTypeReference<?> classBTypeRef = calledMethod.getDeclaringType();
+	                if (classBTypeRef != null) {
+	                    CtType<?> classB = classBTypeRef.getDeclaration();
+	                    if (classB != null && !classA.equals(classB)) {
+	                        Pair<String, String> classPair = new Pair<>(classA.getQualifiedName(), classB.getQualifiedName());
+	                        couplingGraph.merge(classPair, 1.0, Double::sum);
+	                    }
+	                }
+	            }
+	        }
+	    }
+
+	    // Normaliser les valeurs de couplage
+	    normalizeCouplingValues(couplingGraph);
+	}
+
+	private static void normalizeCouplingValues(Map<Pair<String, String>, Double> couplingGraph) {
+	    double maxCouplingValue = couplingGraph.values().stream().max(Double::compare).orElse(1.0);
+	    for (Pair<String, String> key : couplingGraph.keySet()) {
+	        double normalizedValue = couplingGraph.get(key) / maxCouplingValue;
+	        couplingGraph.put(key, normalizedValue);
+	    }
 	}
 
 	// Calcule le couplage entre 2 classes
