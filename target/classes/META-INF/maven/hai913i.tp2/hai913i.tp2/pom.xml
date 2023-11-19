@@ -26,6 +26,12 @@
         <artifactId>jgrapht-io</artifactId>
         <version>1.5.2</version>
     </dependency>
+    
+    <dependency>
+        <groupId>fr.inria.gforge.spoon</groupId>
+        <artifactId>spoon-core</artifactId>
+        <version>9.1.0</version> <!-- Utilisez la dernière version disponible -->
+    </dependency>
 
 
   </dependencies>
